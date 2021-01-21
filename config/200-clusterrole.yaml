@@ -1,7 +1,7 @@
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: tekton-exception-handler-admin
+  name: tekton-job-admin
   labels:
     samples.knative.dev/release: devel
 aggregationRule:
@@ -13,7 +13,7 @@ rules: [] # Rules are automatically filled in by the controller manager.
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: tekton-exception-handler-core
+  name: tekton-job-core
   labels:
     samples.knative.dev/release: devel
     samples.knative.dev/controller: "true"

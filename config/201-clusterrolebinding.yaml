@@ -15,14 +15,14 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: tekton-exception-handler-controller-admin
+  name: tekton-job-controller-admin
   labels:
     samples.knative.dev/release: devel
 subjects:
   - kind: ServiceAccount
     name: controller
-    namespace: tekton-exception-handler
+    namespace: tekton-job
 roleRef:
   kind: ClusterRole
-  name: tekton-exception-handler-admin
+  name: tekton-job-admin
   apiGroup: rbac.authorization.k8s.io
