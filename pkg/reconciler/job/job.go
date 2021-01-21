@@ -14,13 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package exception
+package job
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"reflect"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -33,14 +36,17 @@ import (
 	clientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	listersalpha "github.com/tektoncd/pipeline/pkg/client/listers/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/events"
-	// jobclientset "github.com/vincentpli/concurrent-reconcile/pkg/client/clientset/versioned"
-	// listersjob "github.com/vincentpli/concurrent-reconcile/pkg/client/listers/exception/v1alpha1"
 	"knative.dev/pkg/logging"
+
+	"net/http"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	runreconciler "github.com/tektoncd/pipeline/pkg/client/injection/reconciler/pipeline/v1alpha1/run"
-	// jobv1alpha1 "github.com/vincentpli/concurrent-reconcile/pkg/apis/job/v1alpha1"
+	"github.com/vincentpli/concurrent-reconcile/pkg/apis/job"
+	jobv1alpha1 "github.com/vincentpli/concurrent-reconcile/pkg/apis/job/v1alpha1"
+	jobclientset "github.com/vincentpli/concurrent-reconcile/pkg/client/clientset/versioned"
+	listersjob "github.com/vincentpli/concurrent-reconcile/pkg/client/listers/job/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -52,18 +58,40 @@ type Reconciler struct {
 	Tracker tracker.Interface
 
 	//Clientset about resources
-	pipelineClientSet  clientset.Interface
-	// jobClientSet jobclientset.Interface
+	pipelineClientSet clientset.Interface
+	jobClientSet      jobclientset.Interface
 
 	// Listers index properties about resources
 	runLister listersalpha.RunLister
-	// jobLister listersjob.JobLister
+	jobLister listersjob.JobLister
 }
 
 // Check that our Reconciler implements Interface
 var _ runreconciler.Interface = (*Reconciler)(nil)
 
-const ()
+const (
+	//BASEURL is
+	BASEURL = "https://api.dataplatform.dev.cloud.ibm.com"
+	//PROJECTID is the param key which will deliveied by RUN
+	PROJECTID = "project_id"
+	//SPACEID is the param key which will deliveied by RUN
+	SPACEID = "space_id"
+	//JOBID is the param key which will deliveied by RUN
+	JOBID = "job_id"
+	//INVOKETOKEN is the param key which will deliveied by RUN
+	INVOKETOKEN = "token"
+)
+
+type invokeParams struct {
+	ProjectID   string
+	SpaceID     string
+	JobID       string
+	InvokeToken string
+}
+
+type result struct {
+	RunID string
+}
 
 func init() {
 }
@@ -77,9 +105,9 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, run *v1alpha1.Run) recon
 	// Check that the Run references a Exception CRD.  The logic is controller.go should ensure that only this type of Run
 	// is reconciled this controller but it never hurts to do some bullet-proofing.
 	if run.Spec.Ref == nil ||
-		run.Spec.Ref.APIVersion != exceptionv1alpha1.SchemeGroupVersion.String() ||
-		run.Spec.Ref.Kind != "Exception" {
-		logger.Errorf("Received control for a Run %s/%s that does not reference a Exception custom CRD", run.Namespace, run.Name)
+		run.Spec.Ref.APIVersion != jobv1alpha1.SchemeGroupVersion.String() ||
+		run.Spec.Ref.Kind != "Job" {
+		logger.Errorf("Received control for a Run %s/%s that does not reference a Job custom CRD", run.Namespace, run.Name)
 		return nil
 	}
 
@@ -114,15 +142,8 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, run *v1alpha1.Run) recon
 	// Store the condition before reconcile
 	beforeCondition := run.Status.GetCondition(apis.ConditionSucceeded)
 
-	status := &exceptionv1alpha1.ExceptionStatus{}
-	if err := run.Status.DecodeExtraFields(status); err != nil {
-		run.Status.MarkRunFailed(exceptionv1alpha1.ExceptionRunReasonInternalError.String(),
-			"Internal error calling DecodeExtraFields: %v", err)
-		logger.Errorf("DecodeExtraFields error: %v", err.Error())
-	}
-
 	// Reconcile the Run
-	if err := r.reconcile(ctx, run, status); err != nil {
+	if err := r.reconcile(ctx, run); err != nil {
 		logger.Errorf("Reconcile error: %v", err.Error())
 		merr = multierror.Append(merr, err)
 	}
@@ -130,12 +151,6 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, run *v1alpha1.Run) recon
 	if err := r.updateLabelsAndAnnotations(ctx, run); err != nil {
 		logger.Warn("Failed to update Run labels/annotations", zap.Error(err))
 		merr = multierror.Append(merr, err)
-	}
-
-	if err := run.Status.EncodeExtraFields(status); err != nil {
-		run.Status.MarkRunFailed(exceptionv1alpha1.ExceptionRunReasonInternalError.String(),
-			"Internal error calling EncodeExtraFields: %v", err)
-		logger.Errorf("EncodeExtraFields error: %v", err.Error())
 	}
 
 	afterCondition := run.Status.GetCondition(apis.ConditionSucceeded)
@@ -146,10 +161,134 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, run *v1alpha1.Run) recon
 
 }
 
-func (r *Reconciler) reconcile(ctx context.Context, run *v1alpha1.Run, status *exceptionv1alpha1.ExceptionStatus) error {
+func (r *Reconciler) reconcile(ctx context.Context, run *v1alpha1.Run) error {
 	logger := logging.FromContext(ctx)
 
+	projectID := run.Spec.GetParam(PROJECTID)
+	if projectID == nil {
+		logger.Errorf("Missing spec.Params[0].project_id for Run %s", fmt.Sprintf("%s/%s", run.Namespace, run.Name))
+		run.Status.MarkRunFailed(jobv1alpha1.JobRunReasonCouldntGetParam.String(),
+			"Could not get param: %v", PROJECTID)
+
+		return nil
+	}
+	spaceID := run.Spec.GetParam(SPACEID)
+	if spaceID == nil {
+		logger.Errorf("Missing spec.Params[0].space_id for Run %s", fmt.Sprintf("%s/%s", run.Namespace, run.Name))
+		run.Status.MarkRunFailed(jobv1alpha1.JobRunReasonCouldntGetParam.String(),
+			"Could not get param: %v", SPACEID)
+
+		return nil
+	}
+	jobID := run.Spec.GetParam(JOBID)
+	if jobID == nil {
+		logger.Errorf("Missing spec.Params[0].job_id for Run %s", fmt.Sprintf("%s/%s", run.Namespace, run.Name))
+		run.Status.MarkRunFailed(jobv1alpha1.JobRunReasonCouldntGetParam.String(),
+			"Could not get param: %v", JOBID)
+
+		return nil
+	}
+	invokeToken := run.Spec.GetParam(INVOKETOKEN)
+	if invokeToken == nil {
+		return fmt.Errorf("Missing spec.Params[0].invokeToken for Run %s", fmt.Sprintf("%s/%s", run.Namespace, run.Name))
+		run.Status.MarkRunFailed(jobv1alpha1.JobRunReasonCouldntGetParam.String(),
+			"Could not get param: %v", INVOKETOKEN)
+
+		return nil
+	}
+
+	params := invokeParams{
+		ProjectID:   projectID.Value.StringVal,
+		SpaceID:     spaceID.Value.StringVal,
+		JobID:       jobID.Value.StringVal,
+		InvokeToken: invokeToken.Value.StringVal,
+	}
+
+	runID, err := sendRequest(params, logger)
+	if err != nil {
+		logger.Errorf("Send request hit failed: %v", err)
+	}
+
+	result := result{RunID: runID}
+	if err := run.Status.EncodeExtraFields(result); err != nil {
+		run.Status.MarkRunFailed(jobv1alpha1.JobRunReasonInternalError.String(),
+			"Internal error calling EncodeExtraFields: %v", err)
+		logger.Errorf("EncodeExtraFields error: %v", err.Error())
+	}
+
 	return nil
+}
+
+func sendRequest(params invokeParams, logger *zap.SugaredLogger) (string, error) {
+	logger.Infof("Start create job run with: project_id: %s, space_id: %s, job_id: %s ", params.ProjectID, params.SpaceID, params.JobID)
+
+	requstBody, err := json.Marshal(map[string]string{
+		"job_run": "",
+	})
+	if err != nil {
+		logger.Errorf("create request body hit error: %v", err)
+		return "", err
+	}
+
+	timeout := time.Duration(10 * time.Second)
+	client := http.Client{
+		Timeout: timeout,
+	}
+
+	runScope := generateRunscope(params)
+	url := fmt.Sprintf(BASEURL+"/v2/jobs/%s/runs?%s", params.JobID, runScope)
+
+	request, err := http.NewRequest("POST", url, bytes.NewBuffer(requstBody))
+	if err != nil {
+		logger.Errorf("create request hit error: %v", err)
+		return "", err
+	}
+
+	request.Header.Set("Content-type", "application/json")
+	request.Header.Set("Authorization", params.InvokeToken)
+
+	resp, err := client.Do(request)
+	if err != nil {
+		logger.Errorf("send request hit error: %v", err)
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 201 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			logger.Errorf("read response hit error: %v", err)
+			return "", err
+		}
+
+		var respObj map[string]interface{}
+		err = json.Unmarshal(body, respObj)
+		if err != nil {
+			logger.Errorf("parse response hit error: %v", err)
+			return "", err
+		}
+
+		return fmt.Sprintf("%v", respObj["metadata"].(map[string]interface{})["asset_id"]), nil
+	}
+
+	return "", fmt.Errorf("Get error status code: %s, from: %v", resp.StatusCode, resp)
+}
+
+func generateRunscope(params invokeParams) string {
+	var scope = ""
+	if params.ProjectID != "" {
+		scope += "&project_id=" + params.ProjectID
+	}
+	if params.SpaceID != "" {
+		scope += "&space_id=" + params.SpaceID
+	}
+
+	if strings.HasPrefix(scope, "&") {
+		scope = scope[1:len(scope)]
+	}
+
+	return scope
 }
 
 func (r *Reconciler) updateLabelsAndAnnotations(ctx context.Context, run *v1alpha1.Run) error {
@@ -174,13 +313,6 @@ func (r *Reconciler) updateLabelsAndAnnotations(ctx context.Context, run *v1alph
 	return nil
 }
 
-func storeExceptionSpec(status *exceptionv1alpha1.ExceptionStatus, exs *exceptionv1alpha1.ExceptionSpec) {
-	// Only store the ExceptionSpec once, if it has never been set before.
-	if status.ExceptionSpec == nil {
-		status.ExceptionSpec = exs
-	}
-}
-
 func propagateExceptionLabelsAndAnnotations(run *v1alpha1.Run, exceptionMeta *metav1.ObjectMeta) {
 	// Propagate labels from TaskLoop to Run.
 	if run.ObjectMeta.Labels == nil {
@@ -189,7 +321,7 @@ func propagateExceptionLabelsAndAnnotations(run *v1alpha1.Run, exceptionMeta *me
 	for key, value := range exceptionMeta.Labels {
 		run.ObjectMeta.Labels[key] = value
 	}
-	run.ObjectMeta.Labels[exception.GroupName+"/exception"] = exceptionMeta.Name
+	run.ObjectMeta.Labels[job.GroupName+"/exception"] = exceptionMeta.Name
 
 	// Propagate annotations from TaskLoop to Run.
 	if run.ObjectMeta.Annotations == nil {

@@ -1090,6 +1090,7 @@ github.com/tektoncd/pipeline v0.13.1-0.20200625065359-44f22a067b75 h1:hWdWj5bDjk
 github.com/tektoncd/pipeline v0.13.1-0.20200625065359-44f22a067b75/go.mod h1:R5AlT46x/F8n/pFJFjZ1U1q71GWtVXgG7RZkkoRL554=
 github.com/tektoncd/pipeline v0.18.1 h1:h6zS1W2qGbmqV9OakTtSqnEX3gjNJkZRCErxmPp6szo=
 github.com/tektoncd/pipeline v0.18.1/go.mod h1:PxRWs4faBD15pG0EGQs3f/65hX97sMjjqtiKG3JY2rk=
+github.com/tektoncd/pipeline v0.20.1 h1:hNJa7B2xOPsg4S1a961kyDk6hnDaEAHUll9GKHCMdMg=
 github.com/tektoncd/plumbing v0.0.0-20200217163359-cd0db6e567d2/go.mod h1:QZHgU07PRBTRF6N57w4+ApRu8OgfYLFNqCDlfEZaD9Y=
 github.com/tektoncd/plumbing v0.0.0-20200430135134-e53521e1d887/go.mod h1:cZPJIeTIoP7UPTxQyTQLs7VE1TiXJSNj0te+If4Q+jI=
 github.com/tektoncd/plumbing/pipelinerun-logs v0.0.0-20191206114338-712d544c2c21/go.mod h1:S62EUWtqmejjJgUMOGB1CCCHRp6C706laH06BoALkzU=

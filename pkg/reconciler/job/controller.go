@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package exception
+package job
 
 import (
 	"context"
@@ -26,12 +26,13 @@ import (
 	"knative.dev/pkg/logging"
 
 	pipelineclient "github.com/tektoncd/pipeline/pkg/client/injection/client"
+	pipelinecontroller "github.com/tektoncd/pipeline/pkg/controller"
 
-	// jobclient "github.com/vincentpli/concurrent-reconcile/pkg/client/injection/client"
-	// jobinformer "github.com/vincentpli/concurrent-reconcile/pkg/client/injection/informers/job/v1alpha1/job"
-	runreconciler "github.com/tektoncd/pipeline/pkg/client/injection/reconciler/pipeline/v1alpha1/run"
 	runinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/run"
+	runreconciler "github.com/tektoncd/pipeline/pkg/client/injection/reconciler/pipeline/v1alpha1/run"
 	jobv1alpha1 "github.com/vincentpli/concurrent-reconcile/pkg/apis/job/v1alpha1"
+	jobclient "github.com/vincentpli/concurrent-reconcile/pkg/client/injection/client"
+	jobinformer "github.com/vincentpli/concurrent-reconcile/pkg/client/injection/informers/job/v1alpha1/job"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -47,13 +48,12 @@ func NewController(
 
 	runInformer := runinformer.Get(ctx)
 	jobinformer := jobinformer.Get(ctx)
-	pipelineruninformer := pipelineruninformer.Get(ctx)
 
 	r := &Reconciler{
-		pipelineClientSet:  pipelineclientset,
-		// jobClientSet: jobclientset,
-		runLister:          runInformer.Lister(),
-		// jobLister:    jobinformer.Lister(),
+		pipelineClientSet: pipelineclientset,
+		jobClientSet:      jobclientset,
+		runLister:         runInformer.Lister(),
+		jobLister:         jobinformer.Lister(),
 	}
 
 	impl := runreconciler.NewImpl(ctx, r)
@@ -64,7 +64,7 @@ func NewController(
 	jobinformer.Informer().AddEventHandler(controller.HandleAll(impl.Enqueue))
 
 	runInformer.Informer().AddEventHandler(cache.FilteringResourceEventHandler{
-		FilterFunc: pipelinecontroller.FilterRunRef(exceptionv1alpha1.SchemeGroupVersion.String(), "Job"),
+		FilterFunc: pipelinecontroller.FilterRunRef(jobv1alpha1.SchemeGroupVersion.String(), "Job"),
 		Handler:    controller.HandleAll(impl.Enqueue),
 	})
 

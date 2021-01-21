@@ -61,9 +61,12 @@ type JobSpec struct {
 type JobRunReason string
 
 const (
-	// ExceptionConditionReady is set when the revision is starting to materialize
+	// JobConditionReady is set when the revision is starting to materialize
 	// runtime resources, and becomes true when those resources are ready.
 	JobConditionReady = apis.ConditionReady
+	// JobRunReasonInternalError indicates that the Exception failed due to an internal error in the reconciler
+	JobRunReasonInternalError   JobRunReason = "JobInternalError"
+	JobRunReasonCouldntGetParam JobRunReason = "JobCouldntFoundParam"
 )
 
 func (e JobRunReason) String() string {
