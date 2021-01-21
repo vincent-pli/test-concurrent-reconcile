@@ -15,7 +15,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: tekton-exception-handler
+  name: tekton-job
   labels:
     istio-injection: enabled
     samples.knative.dev/release: devel

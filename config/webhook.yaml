@@ -16,7 +16,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: webhook
-  namespace: tekton-exception-handler
+  namespace: tekton-job
   labels:
     samples.knative.dev/release: devel
 spec:
@@ -48,7 +48,7 @@ spec:
       - name: webhook
         # This is the Go import path for the binary that is containerized
         # and substituted here.
-        image: ko://github.com/vincentpli/exception-handler/cmd/webhook
+        image: ko://github.com/vincentpli/concurrent-reconcile/cmd/webhook
         resources:
           requests:
             cpu: 20m

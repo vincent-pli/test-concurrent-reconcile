@@ -19,7 +19,7 @@ metadata:
     role: webhook
     custom.tekton.dev/release: devel
   name: webhook
-  namespace: tekton-exception-handler
+  namespace: tekton-job
 spec:
   ports:
     - port: 443
