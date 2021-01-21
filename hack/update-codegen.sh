@@ -37,15 +37,15 @@ KNATIVE_CODEGEN_PKG=${KNATIVE_CODEGEN_PKG:-$(cd ${REPO_ROOT}; ls -d -1 ./vendor/
 #                  instead of the $GOPATH directly. For normal projects this can be dropped.
 chmod +x ${CODEGEN_PKG}/generate-groups.sh
 ${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
-  github.com/vincentpli/exception-handler/pkg/client github.com/vincentpli/exception-handler/pkg/apis \
-  "exception:v1alpha1" \
+  github.com/vincentpli/concurrent-reconcile/pkg/client github.com/vincentpli/concurrent-reconcile/pkg/apis \
+  "job:v1alpha1" \
   --go-header-file ${REPO_ROOT}/hack/boilerplate/boilerplate.go.txt
 
 # Knative Injection
 chmod +x ${KNATIVE_CODEGEN_PKG}/hack/generate-knative.sh
 ${KNATIVE_CODEGEN_PKG}/hack/generate-knative.sh "injection" \
-  github.com/vincentpli/exception-handler/pkg/client github.com/vincentpli/exception-handler/pkg/apis \
-  "exception:v1alpha1" \
+  github.com/vincentpli/concurrent-reconcile/pkg/client github.com/vincentpli/concurrent-reconcile/pkg/apis \
+  "job:v1alpha1" \
   --go-header-file ${REPO_ROOT}/hack/boilerplate/boilerplate.go.txt
 
 # Make sure our dependencies are up-to-date
