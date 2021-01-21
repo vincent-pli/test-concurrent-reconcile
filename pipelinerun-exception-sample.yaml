@@ -1,0 +1,89 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  namespace: tekton-exception-handler
+  name: guarded-pr
+  labels:
+    pengli-test/test: hellp
+spec:
+        #serviceAccountName: 'rete-limit'
+  pipelineSpec:
+    tasks:
+      - name: job-activity-fake-run-cmd # when expression using parameter, evaluates to true
+        taskSpec:
+          results:
+            - name: cmd-1-exit-code
+              description: indicates exit code for fake command
+            - name: cmd-2-exit-code
+              description: indicates exit code for fake command
+            - name: cmd-3-exit-code
+              description: indicates exit code for fake command
+          steps:
+            - name: write-exit-code
+              image: ubuntu
+              script: |
+                printf 200 | tee /tekton/results/cmd-1-exit-code
+                printf 404 | tee /tekton/results/cmd-2-exit-code
+                printf 500 | tee /tekton/results/cmd-3-exit-code
+      - name: job-activity-job-1
+        runAfter:
+          - job-activity-fake-run-cmd
+        when:
+          - input: "$(tasks.job-activity-fake-run-cmd.results.cmd-1-exit-code)"
+            operator: in
+            values: ["200"]
+        taskSpec:
+          results:
+            - name: err-source
+              description: indicates exit code for fake command
+            - name: err-number
+              description: indicates exit code for fake command
+            - name: err-message
+              description: indicates exit code for fake command
+          steps:
+            - name: run
+              image: alpine
+              script: |
+                #!/bin/sh
+                printf "pengli-test" | tee /tekton/results/err-source
+                printf "-1" | tee /tekton/results/err-number
+                printf "have no idea what happen, just failed..." | tee /tekton/results/err-message
+                echa "job-1 start to run..."
+      - name: job-activity-job-2
+        runAfter:
+          - job-activity-fake-run-cmd
+        when:
+          - input: "$(tasks.job-activity-fake-run-cmd.results.cmd-2-exit-code)"
+            operator: in
+            values: ["200"]
+        taskSpec:
+          steps:
+            - name: run
+              image: alpine
+              script: |
+                #!/bin/sh
+                echo "job-2 start to run..."
+      - name: job-activity-job-3
+        runAfter:
+          - job-activity-fake-run-cmd
+        when:
+          - input: "$(tasks.job-activity-fake-run-cmd.results.cmd-3-exit-code)"
+            operator: in
+            values: ["200"]
+        taskSpec:
+          steps:
+            - name: run
+              image: alpine
+              script: |
+                #!/bin/sh
+                echo "job-3 start to run..."
+    finally:
+    # Cleanup workspace
+      - name: exception-handler
+        taskRef:
+          apiVersion: custom.tekton.dev/v1alpha1
+          kind: Exception
+          name: exception
+        params:
+        - name: pipelinerun_name
+          value: $(context.pipelineRun.name)

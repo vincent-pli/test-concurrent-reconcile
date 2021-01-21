@@ -1,0 +1,13 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Run
+metadata:
+  name: my-example-run
+  namespace: tekton-exception-handler
+spec:
+  ref:
+    apiVersion: custom.tekton.dev/v1alpha1
+    kind: Exception
+    name: exception
+  params:
+  - name: pipelinerun_name
+    value: guarded-pr-6bbfs

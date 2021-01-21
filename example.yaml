@@ -1,0 +1,30 @@
+apiVersion: custom.tekton.dev/v1alpha1
+kind: Exception
+metadata:
+  name: exception
+  namespace: tekton-exception-handler
+spec:
+  pipelinerunSpec:
+    pipelineSpec:
+      params:
+      - name: ErrSource
+      - name: ErrMessage
+      - name: ErrNumber
+      tasks:
+        - name: echo-good-morning
+          taskSpec:
+            metadata:
+              labels:
+                app: "example"
+            params:
+              - name: arg
+            steps:
+              - name: echo
+                image: ubuntu
+                script: |
+                  #!/usr/bin/env bash
+                  echo "Good Morning!"
+                  echo "$(params.arg)"
+          params:
+            - name: arg
+              value: "$(params.ErrMessage)"
