@@ -1,4 +1,4 @@
-module github.com/vincentpli/exception-handler
+module github.com/vincentpli/concurrent-reconcile
 
 go 1.13
 
