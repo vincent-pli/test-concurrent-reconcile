@@ -63,23 +63,7 @@ type JobRunReason string
 const (
 	// ExceptionConditionReady is set when the revision is starting to materialize
 	// runtime resources, and becomes true when those resources are ready.
-	ExceptionConditionReady = apis.ConditionReady
-	// ExceptionRunReasonInternalError indicates that the Exception failed due to an internal error in the reconciler
-	ExceptionRunReasonInternalError JobRunReason = "ExceptionInternalError"
-	// ExceptionRunReasonCouldntCancel indicates that the Exception failed due to an internal error in the reconciler
-	ExceptionRunReasonCouldntCancel JobRunReason = "CouldntCancel"
-	// ExceptionRunReasonCouldntGet indicates that the associated Exception couldn't be retrieved
-	ExceptionRunReasonCouldntGet JobRunReason = "CouldntGet"
-	// ExceptionRunReasonCouldntGetOriginalPipelinerun indicates that the associated Exception couldn't be retrieved
-	ExceptionRunReasonCouldntGetOriginalPipelinerun JobRunReason = "CouldntGetOriginalPipelinerun"
-	// ExceptionRunReasonNoError indicates that the original Pipelinerun has no error
-	ExceptionRunReasonNoError JobRunReason = "NoError"
-	// ExceptionRunReasonCoundntCreate indicates that could not create new pipelinerun
-	ExceptionRunReasonCoundntCreate JobRunReason = "CoundntCreate"
-	// ExceptionRunReasonRunning indicates that the new created pipelinerun is running
-	ExceptionRunReasonRunning JobRunReason = "Running"
-	// ExceptionRunReasonSucceeded indicates that created Pipelinerun success or no error in original Pipelinerun
-	ExceptionRunReasonSucceeded JobRunReason = "Succeeded"
+	JobConditionReady = apis.ConditionReady
 )
 
 func (e JobRunReason) String() string {

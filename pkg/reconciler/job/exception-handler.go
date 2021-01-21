@@ -33,16 +33,15 @@ import (
 	clientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	listersalpha "github.com/tektoncd/pipeline/pkg/client/listers/pipeline/v1alpha1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/events"
-	jobclientset "github.com/vincentpli/concurrent-reconcile/pkg/client/clientset/versioned"
-	listersjob "github.com/vincentpli/concurrent-reconcile/pkg/client/listers/exception/v1alpha1"
+	// jobclientset "github.com/vincentpli/concurrent-reconcile/pkg/client/clientset/versioned"
+	// listersjob "github.com/vincentpli/concurrent-reconcile/pkg/client/listers/exception/v1alpha1"
 	"knative.dev/pkg/logging"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	runreconciler "github.com/tektoncd/pipeline/pkg/client/injection/reconciler/pipeline/v1alpha1/run"
-	jobv1alpha1 "github.com/vincentpli/concurrent-reconcile/pkg/apis/job/v1alpha1"
+	// jobv1alpha1 "github.com/vincentpli/concurrent-reconcile/pkg/apis/job/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	//"github.com/tektoncd/pipeline/pkg/names"
 )
 
 // Reconciler implements addressableservicereconciler.Interface for
@@ -54,11 +53,11 @@ type Reconciler struct {
 
 	//Clientset about resources
 	pipelineClientSet  clientset.Interface
-	exceptionClientSet jobclientset.Interface
+	// jobClientSet jobclientset.Interface
 
 	// Listers index properties about resources
 	runLister listersalpha.RunLister
-	jobLister listersjob.JobLister
+	// jobLister listersjob.JobLister
 }
 
 // Check that our Reconciler implements Interface

@@ -27,13 +27,11 @@ import (
 
 	pipelineclient "github.com/tektoncd/pipeline/pkg/client/injection/client"
 
-	exceptionclient "github.com/vincentpli/exception-handler/pkg/client/injection/client"
-	exceptioninformer "github.com/vincentpli/exception-handler/pkg/client/injection/informers/exception/v1alpha1/exception"
+	// jobclient "github.com/vincentpli/concurrent-reconcile/pkg/client/injection/client"
+	// jobinformer "github.com/vincentpli/concurrent-reconcile/pkg/client/injection/informers/job/v1alpha1/job"
 	runreconciler "github.com/tektoncd/pipeline/pkg/client/injection/reconciler/pipeline/v1alpha1/run"
 	runinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/run"
-	pipelineruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/pipelinerun"
-	pipelinecontroller "github.com/tektoncd/pipeline/pkg/controller"
-	exceptionv1alpha1 "github.com/vincentpli/exception-handler/pkg/apis/exception/v1alpha1"
+	jobv1alpha1 "github.com/vincentpli/concurrent-reconcile/pkg/apis/job/v1alpha1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -45,18 +43,17 @@ func NewController(
 	logger := logging.FromContext(ctx)
 
 	pipelineclientset := pipelineclient.Get(ctx)
-	exceptionclientset := exceptionclient.Get(ctx)
+	jobclientset := jobclient.Get(ctx)
 
 	runInformer := runinformer.Get(ctx)
-	exceptioninformer := exceptioninformer.Get(ctx)
+	jobinformer := jobinformer.Get(ctx)
 	pipelineruninformer := pipelineruninformer.Get(ctx)
 
 	r := &Reconciler{
 		pipelineClientSet:  pipelineclientset,
-		exceptionClientSet: exceptionclientset,
+		// jobClientSet: jobclientset,
 		runLister:          runInformer.Lister(),
-		exceptionLister:    exceptioninformer.Lister(),
-		pipelineRunLister:  pipelineruninformer.Lister(),
+		// jobLister:    jobinformer.Lister(),
 	}
 
 	impl := runreconciler.NewImpl(ctx, r)
@@ -64,17 +61,11 @@ func NewController(
 
 	logger.Info("Setting up event handlers.")
 
-	exceptioninformer.Informer().AddEventHandler(controller.HandleAll(impl.Enqueue))
+	jobinformer.Informer().AddEventHandler(controller.HandleAll(impl.Enqueue))
 
 	runInformer.Informer().AddEventHandler(cache.FilteringResourceEventHandler{
-		FilterFunc: pipelinecontroller.FilterRunRef(exceptionv1alpha1.SchemeGroupVersion.String(), "Exception"),
+		FilterFunc: pipelinecontroller.FilterRunRef(exceptionv1alpha1.SchemeGroupVersion.String(), "Job"),
 		Handler:    controller.HandleAll(impl.Enqueue),
-	})
-
-	// Add event handler for Pipelineruns controlled by Run
-	pipelineruninformer.Informer().AddEventHandler(cache.FilteringResourceEventHandler{
-		FilterFunc: pipelinecontroller.FilterOwnerRunRef(runInformer.Lister(), exceptionv1alpha1.SchemeGroupVersion.String(), "Exception"),
-		Handler:    controller.HandleAll(impl.EnqueueControllerOf),
 	})
 
 	return impl
