@@ -18,13 +18,22 @@ package main
 
 import (
 	// The set of controllers this controller process runs.
+	"flag"
+
 	"github.com/vincentpli/concurrent-reconcile/pkg/reconciler/job"
 
 	// This defines the shared main for injected controllers.
+	"knative.dev/pkg/controller"
 	"knative.dev/pkg/injection/sharedmain"
 )
 
+var (
+	threadsPerController = flag.Int("threads-per-controller", controller.DefaultThreadsPerController, "Threads (goroutines) to create per controller")
+)
+
 func main() {
+	flag.Parse()
+	controller.DefaultThreadsPerController = *threadsPerController
 	sharedmain.Main("controller",
 		job.NewController,
 	)

@@ -47,6 +47,9 @@ spec:
         # This is the Go import path for the binary that is containerized
         # and substituted here.
         image: ko://github.com/vincentpli/concurrent-reconcile/cmd/controller
+        args: [
+          -threads-per-controller", "12",
+        ]
         resources:
           requests:
             cpu: 100m

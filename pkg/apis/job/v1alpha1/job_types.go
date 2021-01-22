@@ -67,6 +67,7 @@ const (
 	// JobRunReasonInternalError indicates that the Exception failed due to an internal error in the reconciler
 	JobRunReasonInternalError   JobRunReason = "JobInternalError"
 	JobRunReasonCouldntGetParam JobRunReason = "JobCouldntFoundParam"
+	JobRunReasonSuccess         JobRunReason = "Success"
 )
 
 func (e JobRunReason) String() string {

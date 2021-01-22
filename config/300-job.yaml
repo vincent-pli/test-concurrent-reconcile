@@ -30,7 +30,7 @@ spec:
     - all
     - tekton
     shortNames:
-    - exp
+    - jo
   scope: Namespaced
   subresources:
     status: {}

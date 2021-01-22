@@ -89,6 +89,14 @@ type invokeParams struct {
 	InvokeToken string
 }
 
+type Result struct {
+	Metadatas Metadata `json:"metadata,omitempty"`
+}
+
+type Metadata struct {
+	AssetID string `json:"asset_id,omitempty"`
+}
+
 type result struct {
 	RunID string
 }
@@ -214,6 +222,9 @@ func (r *Reconciler) reconcile(ctx context.Context, run *v1alpha1.Run) error {
 		run.Status.MarkRunFailed(jobv1alpha1.JobRunReasonInternalError.String(),
 			"Internal error calling EncodeExtraFields: %v", err)
 		logger.Errorf("EncodeExtraFields error: %v", err.Error())
+	} else {
+		run.Status.MarkRunSucceeded(jobv1alpha1.JobRunReasonSuccess.String(),
+			"Send request success")
 	}
 
 	return nil
@@ -222,13 +233,7 @@ func (r *Reconciler) reconcile(ctx context.Context, run *v1alpha1.Run) error {
 func sendRequest(params invokeParams, logger *zap.SugaredLogger) (string, error) {
 	logger.Infof("Start create job run with: project_id: %s, space_id: %s, job_id: %s ", params.ProjectID, params.SpaceID, params.JobID)
 
-	requstBody, err := json.Marshal(map[string]string{
-		"job_run": "",
-	})
-	if err != nil {
-		logger.Errorf("create request body hit error: %v", err)
-		return "", err
-	}
+	var requstBody = []byte(`{"job_run":{}}`)
 
 	timeout := time.Duration(10 * time.Second)
 	client := http.Client{
@@ -244,8 +249,8 @@ func sendRequest(params invokeParams, logger *zap.SugaredLogger) (string, error)
 		return "", err
 	}
 
-	request.Header.Set("Content-type", "application/json")
-	request.Header.Set("Authorization", params.InvokeToken)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+params.InvokeToken)
 
 	resp, err := client.Do(request)
 	if err != nil {
@@ -262,14 +267,16 @@ func sendRequest(params invokeParams, logger *zap.SugaredLogger) (string, error)
 			return "", err
 		}
 
-		var respObj map[string]interface{}
+		// var respObj map[string]interface{}
+		respObj := &Result{}
 		err = json.Unmarshal(body, respObj)
 		if err != nil {
 			logger.Errorf("parse response hit error: %v", err)
 			return "", err
 		}
 
-		return fmt.Sprintf("%v", respObj["metadata"].(map[string]interface{})["asset_id"]), nil
+		// return fmt.Sprintf("%v", respObj["metadata"].(map[string]interface{})["asset_id"]), nil
+		return respObj.Metadatas.AssetID, nil
 	}
 
 	return "", fmt.Errorf("Get error status code: %s, from: %v", resp.StatusCode, resp)
@@ -321,7 +328,7 @@ func propagateExceptionLabelsAndAnnotations(run *v1alpha1.Run, exceptionMeta *me
 	for key, value := range exceptionMeta.Labels {
 		run.ObjectMeta.Labels[key] = value
 	}
-	run.ObjectMeta.Labels[job.GroupName+"/exception"] = exceptionMeta.Name
+	run.ObjectMeta.Labels[job.GroupName+"/job"] = exceptionMeta.Name
 
 	// Propagate annotations from TaskLoop to Run.
 	if run.ObjectMeta.Annotations == nil {
