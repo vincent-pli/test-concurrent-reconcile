@@ -48,7 +48,7 @@ spec:
         # and substituted here.
         image: ko://github.com/vincentpli/concurrent-reconcile/cmd/controller
         args: [
-          -threads-per-controller", "12",
+          "-threads-per-controller", "12",
         ]
         resources:
           requests:
