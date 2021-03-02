@@ -110,6 +110,11 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, run *v1alpha1.Run) recon
 	logger := logging.FromContext(ctx)
 	logger.Infof("Reconciling Run %s/%s at %v", run.Namespace, run.Name, time.Now())
 
+	//Fake check
+	if time.Now().Sub(run.Status.StartTime.Time) < 60*time.Second {
+		merr = multierror.Append(merr, fmt.Errorf("fake error to requeue the work queue"))
+		return merr
+	}
 	// Check that the Run references a Exception CRD.  The logic is controller.go should ensure that only this type of Run
 	// is reconciled this controller but it never hurts to do some bullet-proofing.
 	if run.Spec.Ref == nil ||
@@ -212,7 +217,7 @@ func (r *Reconciler) reconcile(ctx context.Context, run *v1alpha1.Run) error {
 		InvokeToken: invokeToken.Value.StringVal,
 	}
 
-	runID, err := sendRequest(params, logger)
+	runID, err := sendFakeRequest(params, logger)
 	if err != nil {
 		logger.Errorf("Send request hit failed: %v", err)
 	}
@@ -228,6 +233,12 @@ func (r *Reconciler) reconcile(ctx context.Context, run *v1alpha1.Run) error {
 	}
 
 	return nil
+}
+
+func sendFakeRequest(params invokeParams, logger *zap.SugaredLogger) (string, error) {
+	logger.Infof("Start send fake request...")
+
+	return "", nil
 }
 
 func sendRequest(params invokeParams, logger *zap.SugaredLogger) (string, error) {
