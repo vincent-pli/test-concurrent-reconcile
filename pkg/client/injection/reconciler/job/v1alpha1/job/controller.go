@@ -23,10 +23,12 @@ import (
 	fmt "fmt"
 	reflect "reflect"
 	strings "strings"
+	"time"
 
 	versionedscheme "github.com/vincentpli/concurrent-reconcile/pkg/client/clientset/versioned/scheme"
 	client "github.com/vincentpli/concurrent-reconcile/pkg/client/injection/client"
 	job "github.com/vincentpli/concurrent-reconcile/pkg/client/injection/informers/job/v1alpha1/job"
+	custom "github.com/vincentpli/concurrent-reconcile/pkg/custom"
 	corev1 "k8s.io/api/core/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	types "k8s.io/apimachinery/pkg/types"
@@ -87,7 +89,16 @@ func NewImpl(ctx context.Context, r Interface, optionsFns ...controller.OptionsF
 	t := reflect.TypeOf(r).Elem()
 	queueName := fmt.Sprintf("%s.%s", strings.ReplaceAll(t.PkgPath(), "/", "-"), t.Name())
 
-	impl := controller.NewImpl(rec, logger, queueName)
+	// impl := controller.NewImpl(rec, logger, queueName)
+
+	rateLimiter := custom.NewFixedDurationRateLimiter(5 * time.Second)
+	controllerOption := controller.ControllerOptions{
+		WorkQueueName: queueName,
+		Logger:        logger,
+		RateLimiter:   rateLimiter,
+	}
+	impl := controller.NewImplFull(rec, controllerOption)
+
 	agentName := defaultControllerAgentName
 
 	// Pass impl to the options. Save any optional results.
