@@ -2,7 +2,7 @@ apiVersion: tekton.dev/v1alpha1
 kind: Run
 metadata:
   name: my-example-run
-  namespace: default
+  namespace: tekton-job
 spec:
   ref:
     apiVersion: custom.tekton.dev/v1alpha1
@@ -10,10 +10,10 @@ spec:
     name: job
   params:
   - name: project_id
-    value: guarded-pr-6bbfs
+    value: "828d13e0-e2cc-4eaa-a34e-101c653da6e9"
   - name: space_id
-    value: guarded-pr-6bbfs
+    value: ""
   - name: job_id
-    value: guarded-pr-6bbfs
+    value: "b90ee851-a3e1-42f0-bc4e-fbc96c285480"
   - name: token
-    value: guarded-pr-6bbfs
+    value: "eyJraWQiOiIyMDIxMDExODE0NTIiLCJhbGciOiJSUzI1NiJ9.eyJpYW1faWQiOiJJQk1pZC0yNzAwMDcyV1dLIiwiaWQiOiJJQk1pZC0yNzAwMDcyV1dLIiwicmVhbG1pZCI6IklCTWlkIiwianRpIjoiMjVlZjZhM2ItODY4MC00NWVkLWE5MDgtYTVlOWU0ZmI4NGEyIiwiaWRlbnRpZmllciI6IjI3MDAwNzJXV0siLCJnaXZlbl9uYW1lIjoiSmluIENoaSIsImZhbWlseV9uYW1lIjoiSGUiLCJuYW1lIjoiSmluIENoaSBIZSIsImVtYWlsIjoiaGVqaW5jaGlAY24uaWJtLmNvbSIsInN1YiI6ImhlamluY2hpQGNuLmlibS5jb20iLCJhY2NvdW50Ijp7InZhbGlkIjp0cnVlLCJic3MiOiJhZmE0YzJiOTEzZjE0YzVhYWI3MDk3MGI4YWMxN2JlYyIsImZyb3plbiI6dHJ1ZX0sImlhdCI6MTYxMTMwMDkzNiwiZXhwIjoxNjExMzA0NTM2LCJpc3MiOiJodHRwczovL2lhbS50ZXN0LmNsb3VkLmlibS5jb20vaWRlbnRpdHkiLCJncmFudF90eXBlIjoidXJuOmlibTpwYXJhbXM6b2F1dGg6Z3JhbnQtdHlwZTphcGlrZXkiLCJzY29wZSI6ImlibSBvcGVuaWQiLCJjbGllbnRfaWQiOiJkZWZhdWx0IiwiYWNyIjoxLCJhbXIiOlsicHdkIl19.w3dfmlecOf3SHvKP9JP-8kpjUiGnJ3yFD_tpPVfW5DsZEq212BT0ecJ6MRiHMnzXC-f2VzkTqxAIg6xM0_IR3v5dfPqxWL0YxA5_sqTWFFXZq3x34THA6jzkk2qOXTNAkoARqELljlUR2k-FeSFSjhA-cE97jb7U7fxBUMhWZ-kSBg1ECjochodbmPw0Ht9SNsKZQ_W5jXNIOnkdPIZENjdNHnL7z5Gi71srFnvZIo1Rpbs0tn9gZJXi_wDZSdyaFY6up9F_EXYPjVFij-rkm14580qVXCVNCJNqiJGFVGY-6SbWeZQbqF8d3DRXXgf6TJ_zWbvhmmYWEZbqqbgTpA"

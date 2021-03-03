@@ -29,10 +29,10 @@ import (
 	pipelinecontroller "github.com/tektoncd/pipeline/pkg/controller"
 
 	runinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/run"
-	runreconciler "github.com/tektoncd/pipeline/pkg/client/injection/reconciler/pipeline/v1alpha1/run"
 	jobv1alpha1 "github.com/vincentpli/concurrent-reconcile/pkg/apis/job/v1alpha1"
 	jobclient "github.com/vincentpli/concurrent-reconcile/pkg/client/injection/client"
 	jobinformer "github.com/vincentpli/concurrent-reconcile/pkg/client/injection/informers/job/v1alpha1/job"
+	runreconciler "github.com/vincentpli/concurrent-reconcile/pkg/client/injection/reconciler/pipeline/v1alpha1/run"
 	"k8s.io/client-go/tools/cache"
 )
 

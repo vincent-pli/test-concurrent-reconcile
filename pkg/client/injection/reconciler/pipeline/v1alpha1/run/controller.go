@@ -23,6 +23,7 @@ import (
 	fmt "fmt"
 	reflect "reflect"
 	strings "strings"
+	"time"
 
 	versionedscheme "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/scheme"
 	client "github.com/tektoncd/pipeline/pkg/client/injection/client"
@@ -40,6 +41,7 @@ import (
 	logging "knative.dev/pkg/logging"
 	logkey "knative.dev/pkg/logging/logkey"
 	reconciler "knative.dev/pkg/reconciler"
+	custom "github.com/vincentpli/concurrent-reconcile/pkg/custom"
 )
 
 const (
@@ -95,8 +97,16 @@ func NewImpl(ctx context.Context, r Interface, optionsFns ...controller.OptionsF
 		zap.String(logkey.Kind, "tekton.dev.Run"),
 	)
 
-	impl := controller.NewImpl(rec, logger, ctrTypeName)
+	//impl := controller.NewImpl(rec, logger, ctrTypeName)
+	rateLimiter := custom.NewFixedDurationRateLimiter(5 * time.Second)
+	controllerOption := controller.ControllerOptions{
+		WorkQueueName: ctrTypeName,
+		Logger:        logger,
+		RateLimiter:   rateLimiter,
+	}
+	impl := controller.NewImplFull(rec, controllerOption)
 
+	agentName := defaultControllerAgentName
 	// Pass impl to the options. Save any optional results.
 	for _, fn := range optionsFns {
 		opts := fn(impl)
