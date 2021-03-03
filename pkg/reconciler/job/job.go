@@ -111,7 +111,9 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, run *v1alpha1.Run) recon
 	logger.Infof("Reconciling Run %s/%s at %v", run.Namespace, run.Name, time.Now())
 
 	//Fake check
-	if time.Now().Sub(run.Status.StartTime.Time) < 60*time.Second {
+	if run.Status.StartTime != nil && time.Now().Sub(run.Status.StartTime.Time) < 60*time.Second {
+		fmt.Println("------------------------------------------- raise fake error")
+		fmt.Println(time.Now().Sub(run.Status.StartTime.Time))
 		merr = multierror.Append(merr, fmt.Errorf("fake error to requeue the work queue"))
 		return merr
 	}
