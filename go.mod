@@ -26,5 +26,5 @@ replace (
 	k8s.io/client-go => k8s.io/client-go v0.18.8
 	k8s.io/code-generator => k8s.io/code-generator v0.18.8
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
-	knative.dev/pkg => knative.dev/pkg v0.0.0-20200922164940-4bf40ad82aab
+	knative.dev/pkg => knative.dev/pkg v0.0.0-20210127163530-0d31134d5f4e
 )
