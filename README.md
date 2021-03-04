@@ -7,7 +7,8 @@ In this project, I want to test two things:
 
 
 we try to do an abnormal thing in controller: innvoke a remote server and polling get it's state (since it's a asynchronous process).
-Actually, it's not a suitable scenario for controller, like this:
+Actually, it's not good scenario for controller, like this:
+![abnormal case](https://github.com/vincent-pli/test-concurrent-reconcile/blob/main/concurrency-reconcile.png)
 
 
 
