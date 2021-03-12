@@ -18,6 +18,7 @@ package main
 
 import (
 	// The set of controllers this controller process runs.
+	"context"
 	"flag"
 
 	"github.com/vincentpli/concurrent-reconcile/pkg/reconciler/job"
@@ -32,9 +33,8 @@ var (
 )
 
 func main() {
-	flag.Parse()
+	// flag.Parse()
+	cfg := sharedmain.ParseAndGetConfigOrDie()
 	controller.DefaultThreadsPerController = *threadsPerController
-	sharedmain.Main("controller",
-		job.NewController,
-	)
+	sharedmain.MainWithConfig(context.Background(), "controller", cfg, job.NewController)
 }

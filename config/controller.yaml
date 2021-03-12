@@ -49,6 +49,8 @@ spec:
         image: ko://github.com/vincentpli/concurrent-reconcile/cmd/controller
         args: [
           "-threads-per-controller", "100",
+          "-kube-api-burst", "100",
+          "-kube-api-qps", "100",
         ]
         resources:
           requests:
