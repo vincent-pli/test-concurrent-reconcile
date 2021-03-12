@@ -23,6 +23,7 @@ import (
 	json "encoding/json"
 	fmt "fmt"
 	reflect "reflect"
+	"time"
 
 	v1alpha1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	versioned "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
@@ -239,7 +240,7 @@ func (r *reconcilerImpl) Reconcile(ctx context.Context, key string) error {
 		// Reconcile this copy of the resource and then write back any status
 		// updates regardless of whether the reconciliation errored out.
 		reconcileEvent = do(ctx, resource)
-
+		fmt.Println("++++++++++++++++++++++=")
 		if !r.skipStatusUpdates {
 			reconciler.PostProcessReconcile(ctx, resource, original)
 		}
@@ -328,10 +329,12 @@ func (r *reconcilerImpl) updateStatus(ctx context.Context, existing *v1alpha1.Ru
 		}
 
 		existing.Status = desired.Status
-
+		fmt.Printf("============ key: %s ", existing.Name)
+		fmt.Println(time.Now())
 		updater := r.Client.TektonV1alpha1().Runs(existing.Namespace)
-
 		_, err = updater.UpdateStatus(ctx, existing, metav1.UpdateOptions{})
+		fmt.Printf("============++++++++ key: %s ", existing.Name)
+                fmt.Println(time.Now())
 		return err
 	})
 }

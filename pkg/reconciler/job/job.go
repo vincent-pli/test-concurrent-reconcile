@@ -111,7 +111,7 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, run *v1alpha1.Run) recon
 	logger.Infof("Reconciling Run %s/%s at %v", run.Namespace, run.Name, time.Now())
 
 	//Fake check
-	if run.Status.StartTime != nil && time.Now().Sub(run.Status.StartTime.Time) < 60*time.Second {
+	if run.Status.StartTime != nil && time.Now().Sub(run.Status.StartTime.Time) < 5*time.Second {
 		fmt.Println("------------------------------------------- raise fake error")
 		fmt.Println(time.Now().Sub(run.Status.StartTime.Time))
 		merr = multierror.Append(merr, fmt.Errorf("fake error to requeue the work queue"))
@@ -230,8 +230,17 @@ func (r *Reconciler) reconcile(ctx context.Context, run *v1alpha1.Run) error {
 			"Internal error calling EncodeExtraFields: %v", err)
 		logger.Errorf("EncodeExtraFields error: %v", err.Error())
 	} else {
-		run.Status.MarkRunSucceeded(jobv1alpha1.JobRunReasonSuccess.String(),
-			"Send request success")
+	/*	fmt.Println("hahahahahah")
+		fmt.Println(run.Status.GetCondition(apis.ConditionSucceeded).Status)
+		if run.Status.GetCondition(apis.ConditionSucceeded).IsUnknown() {
+			run.Status.MarkRunSucceeded(jobv1alpha1.JobRunReasonSuccess.String(),
+				"Send request success")
+		} else {
+			run.Status.MarkRunRunning(jobv1alpha1.JobRunReasonSuccess.String(),
+				"Send request keepping")
+		}
+	*/
+	  run.Status.StartTime.Time = time.Now()
 	}
 
 	return nil
@@ -239,7 +248,8 @@ func (r *Reconciler) reconcile(ctx context.Context, run *v1alpha1.Run) error {
 
 func sendFakeRequest(params invokeParams, logger *zap.SugaredLogger) (string, error) {
 	logger.Infof("Start send fake request...")
-
+	time.Sleep(2 * time.Second)
+	logger.Infof("finish send fake request...")
 	return "", nil
 }
 

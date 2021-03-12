@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1alpha1
 kind: Run
 metadata:
-  name: my-example-run
+  generateName: my-example-run-
   namespace: tekton-job
 spec:
   ref:

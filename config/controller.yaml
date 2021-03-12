@@ -20,7 +20,7 @@ metadata:
   labels:
     samples.knative.dev/release: devel
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: controller
@@ -48,7 +48,7 @@ spec:
         # and substituted here.
         image: ko://github.com/vincentpli/concurrent-reconcile/cmd/controller
         args: [
-          "-threads-per-controller", "12",
+          "-threads-per-controller", "100",
         ]
         resources:
           requests:
