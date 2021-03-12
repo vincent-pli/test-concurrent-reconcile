@@ -29,6 +29,15 @@ The new solution will not effect k8s api-server, just requeue the `workqueue` in
 
 I think it could resolve the problem.
 
+### New found issue and how it resolved
+#### 2021.3.12 
+The TPS cannot reach the design.
+Inital setting for thread number is 100, we concurrented send 1000 request to create CR which Controller take care.
+- the depth of workqueue is remain at 900 in a 1000 request 
+- in code level, stuck at `client.UpdateStatus`, this code is at the end of reconcile for update the CR.
+
+I donot suspect the api-server, since the concurrent requst is only 1000, api-server can adress it very simple.
+A clue is about the client.
 
 
 
